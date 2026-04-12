@@ -154,6 +154,7 @@ class Nxbt():
         self.debug = debug
         self.logger = create_logger(
             debug=self.debug, log_to_file=log_to_file, disable_logging=disable_logging)
+        self._closed = False
 
         # Main queue for nbxt tasks
         self.task_queue = Queue()
@@ -199,16 +200,31 @@ class Nxbt():
         all spun up multiprocessing Processes. This is done to
         ensure no zombie processes linger after exit.
         """
+        if self._closed:
+            return
+        self._closed = True
 
         # Need to explicitly kill the controllers process
         # since it isn't daemonized.
-        if hasattr(self, "controllers") and self.controllers.is_alive():
-            self.controllers.terminate()
+        try:
+            if hasattr(self, "controllers") and self.controllers.is_alive():
+                self.controllers.terminate()
+        except Exception:
+            pass
 
-        self.resource_manager.shutdown()
+        try:
+            self.resource_manager.shutdown()
+        except Exception:
+            pass
 
         # Re-enable the BlueZ plugins, if we have permission
-        toggle_clean_bluez(False)
+        try:
+            toggle_clean_bluez(False)
+        except Exception:
+            pass
+
+    def close(self):
+        self._on_exit()
 
     def _command_manager(self, task_queue, state):
         """Used as the main multiprocessing Process that is launched
