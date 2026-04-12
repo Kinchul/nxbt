@@ -508,4 +508,7 @@ class ControllerServer():
         return itr, ctrl
 
     def _on_exit(self):
-        self.bt.reset_address()
+        try:
+            self.bt.reset_address()
+        except Exception:
+            pass

@@ -46,6 +46,10 @@ class Controller():
         self.bt.set_discoverable_timeout(180)
 
         self.bt.set_alias(self.alias)
+        try:
+            self.bt.set_name(self.alias)
+        except Exception as e:
+            self.logger.debug(e)
 
         # Adding the SDP record
         sdp_record_path = os.path.join(

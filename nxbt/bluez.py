@@ -402,6 +402,7 @@ class BlueZ():
                 SERVICE_NAME,
                 self.device_path),
             ADAPTER_INTERFACE)
+        self._initial_address = self.address
 
     @property
     def address(self):
@@ -483,6 +484,19 @@ class BlueZ():
         """
 
         self.device.Set(ADAPTER_INTERFACE, "Alias", value)
+
+    def set_name(self, value):
+        """Sets the BR/EDR controller name advertised over HCI.
+
+        On newer BlueZ versions, changing the D-Bus alias alone is not
+        always enough for the Switch to see the expected controller name.
+        """
+
+        if which("hciconfig") is None:
+            raise Exception("hciconfig is not available on this system." +
+                            "If you can, please install this tool, as " +
+                            "it is required for proper functionality.")
+        _run_command(["hciconfig", self.device_id, "name", value])
 
     @property
     def pairable(self):
@@ -644,6 +658,17 @@ class BlueZ():
 
         dbus_value = dbus.Boolean(value)
         self.device.Set(ADAPTER_INTERFACE, "Powered", dbus_value)
+
+    def reset_address(self):
+        """Restores the adapter address captured when this object was created.
+
+        NXBT historically expected this helper to exist during shutdown even
+        when the address was never modified.
+        """
+
+        if self.address == self._initial_address:
+            return
+        self.set_address(self._initial_address)
 
     def register_profile(self, profile_path, uuid, opts):
         """Registers an SDP record on the BlueZ SDP server.
