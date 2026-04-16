@@ -155,6 +155,7 @@ class Nxbt():
         self.logger = create_logger(
             debug=self.debug, log_to_file=log_to_file, disable_logging=disable_logging)
         self._closed = False
+        self._clean_bluez_enabled = False
 
         # Main queue for nbxt tasks
         self.task_queue = Queue()
@@ -179,7 +180,26 @@ class Nxbt():
 
         # Disable the BlueZ input plugin so we can use the
         # HID control/interrupt Bluetooth ports
-        toggle_clean_bluez(True)
+        skip_clean_bluez = os.getenv("NXBT_SKIP_CLEAN_BLUEZ", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if not skip_clean_bluez:
+            try:
+                toggle_clean_bluez(True)
+                self._clean_bluez_enabled = True
+            except PermissionError as exc:
+                self.logger.warning(
+                    "Skipping NXBT BlueZ cleanup because elevated privileges are unavailable: %s",
+                    exc,
+                )
+            except Exception as exc:
+                self.logger.warning(
+                    "Skipping NXBT BlueZ cleanup after an unexpected error: %s",
+                    exc,
+                )
 
         # Exit handler
         atexit.register(self._on_exit)
@@ -218,10 +238,11 @@ class Nxbt():
             pass
 
         # Re-enable the BlueZ plugins, if we have permission
-        try:
-            toggle_clean_bluez(False)
-        except Exception:
-            pass
+        if self._clean_bluez_enabled:
+            try:
+                toggle_clean_bluez(False)
+            except Exception:
+                pass
 
     def close(self):
         self._on_exit()

@@ -163,9 +163,14 @@ def clean_sdp_records():
                         "If you can, please install this tool, as " +
                         "it is required for proper functionality.")
 
-    # Enable Read/Write to the SDP server. This is a remedy for a 
-    # compatibility mode bug introduced in later versions of BlueZ 5
-    _run_command(["chmod", "777", "/var/run/sdp"])
+    # Enable Read/Write to the SDP server when possible. On systems where
+    # NXBT runs as a normal user, this can fail with EPERM; browsing/deleting
+    # SDP records may still work depending on the local BlueZ setup, so keep
+    # this best-effort instead of failing the whole connect path.
+    try:
+        _run_command(["chmod", "777", "/var/run/sdp"])
+    except Exception:
+        pass
 
     # Identify/List all SDP services available with sdptool
     result = _run_command(['sdptool', 'browse', 'local']).stdout.decode('utf-8')
