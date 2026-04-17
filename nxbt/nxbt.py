@@ -351,10 +351,18 @@ class Nxbt():
         })
 
         if block:
+            print(f"[nxbt] macro submitted id={macro_id[:8]} macro={repr(macro)}")
+            wait_start = time.perf_counter()
+            last_log = wait_start
             while True:
-                finished = (self.manager_state
-                            [controller_index]["finished_macros"])
+                state = self.manager_state[controller_index]
+                finished = state["finished_macros"]
+                now = time.perf_counter()
+                if now - last_log >= 1.0:
+                    print(f"[nxbt] still waiting for macro id={macro_id[:8]} elapsed={now-wait_start:.1f}s state={state.get('state')} finished_count={len(finished)}")
+                    last_log = now
                 if macro_id in finished:
+                    print(f"[nxbt] macro done id={macro_id[:8]} elapsed={now-wait_start:.3f}s")
                     break
 
                 time.sleep(1/120)  # Wait one Pro Controller cycle
