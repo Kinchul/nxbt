@@ -155,7 +155,7 @@ class Nxbt():
         self.logger = create_logger(
             debug=self.debug, log_to_file=log_to_file, disable_logging=disable_logging)
         self._closed = False
-        self._clean_bluez_enabled = False
+        # self._clean_bluez_enabled = False
 
         # Main queue for nbxt tasks
         self.task_queue = Queue()
@@ -180,26 +180,28 @@ class Nxbt():
 
         # Disable the BlueZ input plugin so we can use the
         # HID control/interrupt Bluetooth ports
-        skip_clean_bluez = os.getenv("NXBT_SKIP_CLEAN_BLUEZ", "").strip().lower() in {
-            "1",
-            "true",
-            "yes",
-            "on",
-        }
-        if not skip_clean_bluez:
-            try:
-                toggle_clean_bluez(True)
-                self._clean_bluez_enabled = True
-            except PermissionError as exc:
-                self.logger.warning(
-                    "Skipping NXBT BlueZ cleanup because elevated privileges are unavailable: %s",
-                    exc,
-                )
-            except Exception as exc:
-                self.logger.warning(
-                    "Skipping NXBT BlueZ cleanup after an unexpected error: %s",
-                    exc,
-                )
+        # skip_clean_bluez = os.getenv("NXBT_SKIP_CLEAN_BLUEZ", "").strip().lower() in {
+        #     "1",
+        #     "true",
+        #     "yes",
+        #     "on",
+        # }
+        # if not skip_clean_bluez:
+        #     try:
+        #         toggle_clean_bluez(True)
+        #         self._clean_bluez_enabled = True
+        #     except PermissionError as exc:
+        #         self.logger.warning(
+        #             "Skipping NXBT BlueZ cleanup because elevated privileges are unavailable: %s",
+        #             exc,
+        #         )
+        #     except Exception as exc:
+        #         self.logger.warning(
+        #             "Skipping NXBT BlueZ cleanup after an unexpected error: %s",
+        #             exc,
+        #         )
+
+        toggle_clean_bluez(True)
 
         # Exit handler
         atexit.register(self._on_exit)
@@ -238,11 +240,11 @@ class Nxbt():
             pass
 
         # Re-enable the BlueZ plugins, if we have permission
-        if self._clean_bluez_enabled:
-            try:
-                toggle_clean_bluez(False)
-            except Exception:
-                pass
+        # if self._clean_bluez_enabled:
+        try:
+            toggle_clean_bluez(False)
+        except Exception:
+            pass
 
     def close(self):
         self._on_exit()
@@ -351,7 +353,7 @@ class Nxbt():
         })
 
         if block:
-            print(f"[nxbt] macro submitted id={macro_id[:8]} macro={repr(macro)}")
+            # print(f"[nxbt] macro submitted id={macro_id[:8]} macro={repr(macro)}")
             wait_start = time.perf_counter()
             last_log = wait_start
             while True:
@@ -362,7 +364,7 @@ class Nxbt():
                     print(f"[nxbt] still waiting for macro id={macro_id[:8]} elapsed={now-wait_start:.1f}s state={state.get('state')} finished_count={len(finished)}")
                     last_log = now
                 if macro_id in finished:
-                    print(f"[nxbt] macro done id={macro_id[:8]} elapsed={now-wait_start:.3f}s")
+                    # print(f"[nxbt] macro done id={macro_id[:8]} elapsed={now-wait_start:.3f}s")
                     break
 
                 time.sleep(1/120)  # Wait one Pro Controller cycle
